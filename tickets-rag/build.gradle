@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.ejemplo'
+version = '1.0.0'
+description = 'Clasificador y priorizador de tickets de soporte con RAG (n8n + Spring Boot)'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    // Lombok necesita estar tambien en el classpath de compilacion
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+dependencies {
+    // API REST + servidor web + RestClient para llamar a n8n
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // Acceso a la base de datos relacional (historial de analisis)
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // Validacion de la entrada (@NotBlank, @Size)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // Reduce codigo repetitivo (getters y setters) en las entidades
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

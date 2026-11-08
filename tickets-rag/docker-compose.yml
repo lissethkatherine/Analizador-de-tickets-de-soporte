@@ -1,0 +1,77 @@
+
+services:
+  # ==========================================
+  # N8N - AUTOMATIZACIÓN DE TICKETS
+  # ==========================================
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: tickets-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=America/Bogota
+      - TZ=America/Bogota
+      - NODE_ENV=production
+      - N8N_HOST=germinate-had-heroism.ngrok-free.dev
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - N8N_EDITOR_BASE_URL=https://germinate-had-heroism.ngrok-free.dev/
+      - WEBHOOK_URL=https://germinate-had-heroism.ngrok-free.dev/
+      - N8N_PROXY_HOPS=1
+    volumes:
+      - n8n_data:/home/node/.n8n
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ==========================================
+  # NGROK - ACCESO PUBLICO A N8N
+  # ==========================================
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: tickets-ngrok
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:? NGROK_AUTHTOKEN en .env}
+    command:
+      - http
+      - n8n:5678
+      - --domain=germinate-had-heroism.ngrok-free.dev
+    depends_on:
+      - n8n
+
+  # ==========================================
+  # QDRANT - BASE DE DATOS VECTORIAL
+  # ==========================================
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: tickets-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  # ==========================================
+  # POSTGRESQL - HISTORIAL DE TICKETS
+  # ==========================================
+  postgres:
+    image: postgres:16
+    container_name: tickets-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-tickets}
+      POSTGRES_USER: ${DB_USER:-tickets}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-tickets}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+# ==========================================
+# VOLÚMENES PERSISTENTES
+# ==========================================
+volumes:
+  n8n_data:
+  qdrant_data:
+  pg_data:
